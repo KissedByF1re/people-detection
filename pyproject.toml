@@ -1,0 +1,22 @@
+[project]
+name = "people-detection"
+version = "0.1.0"
+description = ""
+authors = []
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+]
+
+[tool.poetry.group.dev.dependencies]
+ruff = "^0.11.4"
+black = "^25.1.0"
+isort = "^6.0.1"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 88  # Максимальная длина строки
+select = ["E", "F"]  # Активировать определенные категории ошибок
