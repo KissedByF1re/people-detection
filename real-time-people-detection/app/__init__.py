@@ -1,0 +1,1 @@
+"""Real-time people detection application.""" 
