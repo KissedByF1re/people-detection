@@ -255,9 +255,14 @@ class PeopleDetectionApp:
         ret, frame = video_source.read_frame()
         
         if not ret or frame is None:
-            st.error("Failed to read frame from video source.")
-            self.stop_detection()
-            return
+            # Video has ended or failed to read frame
+            if isinstance(video_source.source, str):  # If it's a video file
+                st.warning("Video has ended. Choose another video or restart.")
+                self.stop_detection()
+            else:  # If it's a webcam, show error
+                st.error("Failed to read frame from video source.")
+                self.stop_detection()
+            return False
         
         # Store the latest frame even if we don't run inference on it
         st.session_state.last_frame = frame
