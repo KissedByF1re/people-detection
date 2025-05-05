@@ -109,32 +109,13 @@ class PeopleDetectionApp:
                 help="Control how many frames per second are sent to the model for inference. Lower values use less resources but may appear less smooth."
             )
             
-            # Video source selection
-            source_type = st.radio(
-                "Select video source",
-                options=["Webcam", "Demo Video"],
+            # Video selection
+            demo_selection = st.selectbox(
+                "Select demo video",
+                options=list(DEMO_VIDEOS.keys()),
                 index=0,
             )
-            
-            camera_id = 0
-            video_path = str(DEMO_VIDEOS["People Detection"])
-            
-            if source_type == "Webcam":
-                camera_id = st.selectbox(
-                    "Select webcam",
-                    options=[0, 1, 2, 3],
-                    index=0,
-                )
-                source = camera_id
-            else:
-                # Let user select which demo video to use
-                demo_selection = st.selectbox(
-                    "Select demo video",
-                    options=list(DEMO_VIDEOS.keys()),
-                    index=0,
-                )
-                video_path = str(DEMO_VIDEOS[demo_selection])
-                source = video_path
+            video_path = str(DEMO_VIDEOS[demo_selection])
             
             # Control buttons
             col1, col2 = st.columns(2)
@@ -171,7 +152,7 @@ class PeopleDetectionApp:
         
         # Handle button actions
         if start_button:
-            self.start_detection(source, model_name, detection_threshold, target_fps)
+            self.start_detection(video_path, model_name, detection_threshold, target_fps)
         
         if stop_button:
             self.stop_detection()
@@ -184,7 +165,7 @@ class PeopleDetectionApp:
         Start the detection process.
         
         Args:
-            source: Video source (camera ID or file path)
+            source: Video file path
             model_name: YOLOv8 model to use
             threshold: Detection confidence threshold
             target_fps: Target frames per second for inference
@@ -192,25 +173,23 @@ class PeopleDetectionApp:
         # Stop existing detection if running
         self.stop_detection()
         
-        # Initialize video source
-        video_source = VideoSource(
-            source=source,
-            width=FRAME_WIDTH,
-            height=FRAME_HEIGHT,
-        )
-        
         # Initialize detector
         detector = PeopleDetector(
             model_name=model_name,
             threshold=threshold,
         )
         
-        # Start video capture
+        # Initialize VideoSource
+        video_source = VideoSource(
+            source=source,
+            width=FRAME_WIDTH,
+            height=FRAME_HEIGHT,
+        )
         if not video_source.start():
             st.error(f"Failed to open video source: {source}")
             return
         
-        # Store objects in session state
+        # Store detector and state
         st.session_state.video_source = video_source
         st.session_state.detector = detector
         st.session_state.is_running = True
@@ -255,13 +234,9 @@ class PeopleDetectionApp:
         ret, frame = video_source.read_frame()
         
         if not ret or frame is None:
-            # Video has ended or failed to read frame
-            if isinstance(video_source.source, str):  # If it's a video file
-                st.warning("Video has ended. Choose another video or restart.")
-                self.stop_detection()
-            else:  # If it's a webcam, show error
-                st.error("Failed to read frame from video source.")
-                self.stop_detection()
+            # Video has ended
+            st.warning("Video has ended. Choose another video or restart.")
+            self.stop_detection()
             return False
         
         # Store the latest frame even if we don't run inference on it
@@ -310,7 +285,7 @@ class PeopleDetectionApp:
         st.session_state.frame_placeholder.image(
             rgb_frame,
             caption="Detection Results",
-            use_column_width=True,
+            use_container_width=True,
         )
         
         # Update stats
