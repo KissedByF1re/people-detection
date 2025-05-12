@@ -1,0 +1,29 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements for the app
+COPY real-time-people-detection/requirements.txt .
+
+# Install psutil and matplotlib for monitoring and charting
+RUN pip install --no-cache-dir -r requirements.txt && \
+    pip install --no-cache-dir psutil matplotlib
+
+# Copy the entire project
+COPY . .
+
+# Set environment variables
+ENV PYTHONPATH="/app:${PYTHONPATH}"
+
+# Create a script to run the tests with debug info
+RUN echo '#!/bin/sh\nls -la\necho "Directory structure:"\nfind . -type d -not -path "*/\.*" | sort\necho "Python path:"\npython -c "import sys; print(sys.path)"\necho "Running tests:"\npython tests/performance_test.py' > /app/run_tests.sh && \
+    chmod +x /app/run_tests.sh
+
+# Command to run the performance tests with debug info
+CMD ["/app/run_tests.sh"] 
