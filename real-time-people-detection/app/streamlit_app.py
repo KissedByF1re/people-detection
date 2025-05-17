@@ -21,6 +21,12 @@ from app.utils import VideoSource, draw_detections, add_performance_stats
 
 # Constants
 ASSETS_DIR = Path(__file__).parent.parent / "assets"
+# Add custom model paths
+MODELS_DIR = Path(__file__).parent.parent.parent
+YOLO11N_MODEL = MODELS_DIR / "yolo11n_results" / "best.pt"
+YOLO11S_MODEL = MODELS_DIR / "yolo11s_results" / "best.pt"
+YOLO11M_MODEL = MODELS_DIR / "yolo11m_results" / "best.pt"
+
 DEMO_VIDEOS = {
     "One Person": ASSETS_DIR / "one-by-one-person-detection.mp4",
     "Store Aisle": ASSETS_DIR / "store-aisle-detection.mp4",
@@ -79,16 +85,25 @@ class PeopleDetectionApp:
         with st.sidebar:
             st.header("Settings")
             
+            # Create a mapping for readable model names
+            model_options = {
+                "YOLOv8n (Nano)": "yolov8n.pt",
+                "YOLOv8s (Small)": "yolov8s.pt",
+                "YOLOv8m (Medium)": "yolov8m.pt",
+                "YOLO11n (Custom)": str(YOLO11N_MODEL),
+                "YOLO11s (Custom)": str(YOLO11S_MODEL),
+                "YOLO11m (Custom)": str(YOLO11M_MODEL),
+            }
+            
             # Model selection
-            model_name = st.selectbox(
+            model_display_name = st.selectbox(
                 "Select detection model",
-                options=[
-                    "yolov8n.pt",  # Nano model (smallest)
-                    "yolov8s.pt",  # Small model
-                    "yolov8m.pt",  # Medium model
-                ],
+                options=list(model_options.keys()),
                 index=0,
             )
+            
+            # Get the actual model path from the display name
+            model_name = model_options[model_display_name]
             
             # Detection threshold
             detection_threshold = st.slider(
